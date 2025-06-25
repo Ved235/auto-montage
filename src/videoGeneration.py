@@ -16,8 +16,13 @@ def generateMontage(clip_paths, output_path):
 
     processed_clips = []
 
-    transitionTypes = ['translation','rotation', 'zoom_in', 'translation_inv', 'zoom_out']
-    processed_clips.append(mpy.VideoFileClip(clips[0]))
+    firstClip = mpy.VideoFileClip(clips[0])
+    fps = firstClip.fps if firstClip.fps else 30
+    print(f"Using FPS: {fps}")
+    dropTime = 8 / fps
+
+    transitionTypes = ['translation','rotation', 'zoom_in', 'translation_inv', 'zoom_out','rotation_inv']
+    processed_clips.append(firstClip.subclipped(0, firstClip.duration - dropTime))
 
     for i in range(len(clips)-1):
         clipOne = clips[i]
@@ -42,11 +47,18 @@ def generateMontage(clip_paths, output_path):
 
             if temp_transition.exists():
                 print(f"Transition {i} to {i+1} processed successfully.")
+                nextClip = mpy.VideoFileClip(clipTwo)
+
+                if i < len(clips) - 2:
+                    nextClip = nextClip.subclipped(dropTime, nextClip.duration - dropTime)
+                else:
+                    nextClip = nextClip.subclipped(dropTime, nextClip.duration)
+
                 processed_clips.append(mpy.VideoFileClip(str(temp_transition)))
                 processed_clips.append(mpy.VideoFileClip(clipTwo))
                 
         except subprocess.CalledProcessError as e:
-            print(e)
+            print("Error encountered",e)
             continue
 
     for i, clip in enumerate(processed_clips):
