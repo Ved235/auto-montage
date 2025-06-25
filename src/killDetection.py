@@ -2,7 +2,11 @@ import cv2
 from ultralytics import YOLO
 import os
 
-def detectKills(video_path, model_path='./model.pt'):
+def detectKills(video_path):
+    model_path = "./model.pt"
+    if not os.path.exists(model_path):
+        print(f"Model file {model_path} does not exist.")
+        
     timestamps = []
     model = YOLO(model_path)
     capture = cv2.VideoCapture(video_path)
@@ -27,9 +31,5 @@ def detectKills(video_path, model_path='./model.pt'):
 
 if __name__ == "__main__":
     video_path = "./test.mp4"
-    model_path = "./model.pt"
-    if not os.path.exists(model_path):
-        print(f"Model file {model_path} does not exist.")
-    else:
-        kill_timestamps = detectKills(video_path, model_path)
-        print(kill_timestamps)
+    kill_timestamps = detectKills(video_path)
+    print(kill_timestamps)
