@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 import random
 
-def generateMontage(clip_paths, output_path):
+def generateMontage(clip_paths, audio_path, output_path):
     clips = sorted([os.path.join(clip_paths,f) for f in os.listdir(clip_paths)])
 
     if not clips:
@@ -16,13 +16,20 @@ def generateMontage(clip_paths, output_path):
 
     processed_clips = []
 
+    audio = mpy.AudioFileClip(audio_path)
+    print(f"Using audio: {audio_path}, duration: {audio.duration} seconds")
+
     firstClip = mpy.VideoFileClip(clips[0])
     fps = firstClip.fps if firstClip.fps else 30
     print(f"Using FPS: {fps}")
     dropTime = 8 / fps
-
-    transitionTypes = ['translation','rotation', 'zoom_in', 'translation_inv', 'zoom_out','rotation_inv']
-    processed_clips.append(firstClip.subclipped(0, firstClip.duration - dropTime))
+    musicTime = 0.0
+    
+    transitionTypes = ['translation','rotation','zoom_in','translation_inv','zoom_out','rotation_inv']
+    
+    firstClip = firstClip.subclipped(0, firstClip.duration - dropTime)
+    processed_clips.append(addAudio(firstClip, audio, musicTime))
+    musicTime += firstClip.duration
 
     for i in range(len(clips)-1):
         clipOne = clips[i]
@@ -54,9 +61,14 @@ def generateMontage(clip_paths, output_path):
                 else:
                     nextClip = nextClip.subclipped(dropTime, nextClip.duration)
 
-                processed_clips.append(mpy.VideoFileClip(str(temp_transition)))
-                processed_clips.append(mpy.VideoFileClip(clipTwo))
-                
+                temp_transition = mpy.VideoFileClip(str(temp_transition))
+                processed_clips.append(addAudio(temp_transition, audio, musicTime))
+                musicTime += temp_transition.duration
+
+                nextClip = addAudio(nextClip, audio, musicTime)
+                processed_clips.append(nextClip)
+                musicTime += nextClip.duration
+
         except subprocess.CalledProcessError as e:
             print("Error encountered",e)
             continue
@@ -65,19 +77,41 @@ def generateMontage(clip_paths, output_path):
         print(f"Clip {i}: {clip.duration} seconds")
     video = mpy.concatenate_videoclips(processed_clips, method="compose")
 
-    video.write_videofile(output_path, codec="libx264")
+    video.write_videofile(output_path, codec="libx264", audio_codec="aac")
 
     for clip in processed_clips:    
         clip.close()
     video.close()
 
+def addAudio(clip, audio, timing):
+
+    clipDuration = clip.duration
+    musicDuration = audio.duration
+
+    if timing > musicDuration:
+        loopTiming = timing % musicDuration
+        music = audio.subclipped(loopTiming, min(loopTiming + clipDuration, musicDuration))
+    
+    else:
+        musicEnd = min(timing + clipDuration, musicDuration)
+        music = audio.subclipped(timing, musicEnd)
+
+        if musicEnd > musicDuration:
+            remainingDuration = musicEnd - musicDuration
+            extendedMusic = mpy.concatenate_audioclips([audio]*(int(remainingDuration / musicDuration) + 1))
+            music = extendedMusic.subclipped(timing, timing + clipDuration)
+
+    return clip.with_audio(music)
+
 if __name__ == "__main__":
     clip_paths = "./clips"
     output_path = "./montage.mp4"
+    audio_path = "./audio.mp3"
+
     if not os.path.exists(clip_paths):
         print(f"Clip directory {clip_paths} does not exist.")
     else:
-        generateMontage(clip_paths, output_path)
+        generateMontage(clip_paths, audio_path , output_path)
 
 
 

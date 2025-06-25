@@ -1,7 +1,7 @@
 import os
 from moviepy import VideoFileClip
 from killDetection import detectKills
-def extract_clips(video_path, timestamps, output_dir='./clips'):
+def extractClips(video_path, timestamps, output_dir='./clips'):
     gap = 0.5
     buffer = 0.5
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     video_path = "./test.mp4"
     output_dir = "./clips"
     timestamps = detectKills(video_path)
-    clip_paths = extract_clips(video_path, timestamps, output_dir)
+    clip_paths = extractClips(video_path, timestamps, output_dir)
     print("Extracted clips:", clip_paths)
     
 
