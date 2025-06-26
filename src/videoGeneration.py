@@ -3,6 +3,7 @@ import os
 import pathlib
 import subprocess
 import random
+import shutil
 
 def generateMontage(clip_paths, audio_path, output_path):
     clips = sorted([os.path.join(clip_paths,f) for f in os.listdir(clip_paths)])
@@ -46,6 +47,7 @@ def generateMontage(clip_paths, audio_path, output_path):
             "--animation", transition,
             "--num_frames", "8",
             "--merge", "true",
+            "--max_brightness", "3",
             "--output", str(temp_dir / f"{i}_{i+1}_transition")
         ]
 
@@ -71,8 +73,9 @@ def generateMontage(clip_paths, audio_path, output_path):
 
         except subprocess.CalledProcessError as e:
             print("Error encountered",e)
-            continue
-
+            shutil.rmtree(temp_dir)
+            return
+        
     for i, clip in enumerate(processed_clips):
         print(f"Clip {i}: {clip.duration} seconds")
     video = mpy.concatenate_videoclips(processed_clips, method="compose")
@@ -82,6 +85,9 @@ def generateMontage(clip_paths, audio_path, output_path):
     for clip in processed_clips:    
         clip.close()
     video.close()
+
+    # Clean up temporary files
+    shutil.rmtree(temp_dir)
 
 def addAudio(clip, audio, timing):
 
