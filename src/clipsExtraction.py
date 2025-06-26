@@ -1,6 +1,7 @@
 import os
 from moviepy import VideoFileClip
-from killDetection import detectKills
+from src.killDetection import detectKills
+
 def extractClips(video_path, timestamps, output_dir='./clips'):
     gap = 0.5
     buffer = 0.5
