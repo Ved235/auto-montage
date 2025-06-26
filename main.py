@@ -5,6 +5,7 @@ from pathlib import Path
 from src.videoGeneration import generateMontage
 from src.clipsExtraction import extractClips
 import shutil
+import os
 
 class AutoMontageGUI:
     def __init__(self):
@@ -90,6 +91,32 @@ class AutoMontageGUI:
     def browse_output(self, sender, app_data):
         dpg.show_item("output_file_dialog")
     
+    def validate_paths(self):
+        errors = []
+        
+        if not self.inputPath:
+            errors.append("Input path is required")
+        elif not os.path.exists(self.inputPath):
+            errors.append("Input file does not exist")
+        elif not os.path.isfile(self.inputPath):
+            errors.append("Input path must be a file")
+    
+        if not self.audioPath:
+            errors.append("Audio path is required")
+        elif not os.path.exists(self.audioPath):
+            errors.append("Audio file does not exist")
+        elif not os.path.isfile(self.audioPath):
+            errors.append("Audio path must be a file")
+        
+        if not self.outputPath:
+            errors.append("Output path is required")
+        else:
+            output_dir = os.path.dirname(self.outputPath)
+            if output_dir and not os.path.exists(output_dir):
+                errors.append("Output directory does not exist")
+            
+        return len(errors) == 0, errors
+    
     def clear_log(self):
         dpg.set_value("log_output", "")
     
@@ -103,9 +130,13 @@ class AutoMontageGUI:
         if self.processing:
             print("Processing already in progress.")
             return
-        
-        if not self.inputPath or not self.audioPath or not self.outputPath:
-            print("Please ensure all paths are set before starting the process.")
+
+        is_valid, validation_errors = self.validate_paths()
+        if not is_valid:
+            self.clear_log()
+            self.log_message("Validation failed:")
+            for error in validation_errors:
+                self.log_message(f"  - {error}")
             return
         
         self.processing = True
