@@ -87,7 +87,8 @@ def addAudio(clip, audio, timing):
 
     clipDuration = clip.duration
     musicDuration = audio.duration
-
+    introDuration = 0.5
+    
     if timing > musicDuration:
         loopTiming = timing % musicDuration
         music = audio.subclipped(loopTiming, min(loopTiming + clipDuration, musicDuration))
@@ -100,8 +101,17 @@ def addAudio(clip, audio, timing):
             remainingDuration = musicEnd - musicDuration
             extendedMusic = mpy.concatenate_audioclips([audio]*(int(remainingDuration / musicDuration) + 1))
             music = extendedMusic.subclipped(timing, timing + clipDuration)
-
-    return clip.with_audio(music)
+    
+    if clip.audio is not None:
+        if clipDuration > introDuration:
+            remainingMusic = music.subclipped(introDuration, musicDuration)
+            introCombined = mpy.CompositeAudioClip([clip.audio.subclipped(0,introDuration), music.subclipped(0,introDuration)])
+            finalCombined = mpy.CompositeAudioClip([introCombined, remainingMusic])
+        else:
+            finalCombined = mpy.CompositeAudioClip([clip.audio, music])
+    else:
+        finalCombined = music
+    return clip.with_audio(finalCombined)
 
 if __name__ == "__main__":
     clip_paths = "./clips"

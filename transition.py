@@ -30,7 +30,7 @@ MERGE_PHASES = False
 # variable that cannot be changed by arg-parser
 _OUTPUT_VIDEO_TYPE = ".mp4"
 _OUTPUT_VIDEO_CODEC = "h264"
-_LIMITS = {"rotation": (5, 90), "brightness": (0.0, 3), "blur": (0.005, 1.0),
+_LIMITS = {"rotation": (5, 90), "brightness": (0.0, 3.5), "blur": (0.005, 1.0),
            "distortion": (0.3, 1.0), "zoom": (1.2, 2.0)}
 _ANIMATION_HELP = f"""  
 This program supports multiple types of animation. The arguments 'max_blur', 'max_distortion' and 'max_brightness' \
