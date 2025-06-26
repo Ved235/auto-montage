@@ -77,7 +77,7 @@ def generateMontage(clip_paths, audio_path, output_path):
         print(f"Clip {i}: {clip.duration} seconds")
     video = mpy.concatenate_videoclips(processed_clips, method="compose")
 
-    video.write_videofile(output_path, codec="libx264", audio_codec="aac")
+    video.write_videofile(output_path, codec="libx264", audio_codec="aac", threads=6)
 
     for clip in processed_clips:    
         clip.close()
@@ -104,13 +104,17 @@ def addAudio(clip, audio, timing):
     
     if clip.audio is not None:
         if clipDuration > introDuration:
-            remainingMusic = music.subclipped(introDuration, musicDuration)
-            introCombined = mpy.CompositeAudioClip([clip.audio.subclipped(0,introDuration), music.subclipped(0,introDuration)])
-            finalCombined = mpy.CompositeAudioClip([introCombined, remainingMusic])
+            introAudio = clip.audio.subclipped(0, introDuration).with_volume_scaled(4.0)
+            introMusic = music.subclipped(0, introDuration).with_volume_scaled(0.1)
+            remainingMusic = music.subclipped(introDuration).with_volume_scaled(0.7)
+           
+            introCombined = mpy.CompositeAudioClip([introAudio,introMusic])
+            finalCombined = mpy.concatenate_audioclips([introCombined, remainingMusic])
         else:
-            finalCombined = mpy.CompositeAudioClip([clip.audio, music])
+            finalCombined = mpy.CompositeAudioClip([clip.audio.with_volume_scaled(4), music.with_volume_scaled(0.1)])
     else:
-        finalCombined = music
+        finalCombined = music.with_volume_scaled(0.7)
+
     return clip.with_audio(finalCombined)
 
 if __name__ == "__main__":
