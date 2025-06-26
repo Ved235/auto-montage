@@ -2,14 +2,14 @@ import os
 from moviepy import VideoFileClip
 from src.killDetection import detectKills
 
-def extractClips(video_path, timestamps, output_dir='./clips'):
+def extractClips(video_path, output_dir='./temp_clips'):
     gap = 0.5
     buffer = 0.5
 
     os.makedirs(output_dir, exist_ok=True)
-
+    timestamps = detectKills(video_path)
     if not timestamps:
-        print("No timestamps provided for clip extraction.")
+        print("No kill timestamps detected.")
         return []
     
     timestamps.sort()
@@ -44,8 +44,7 @@ def extractClips(video_path, timestamps, output_dir='./clips'):
 if __name__ == "__main__":
     video_path = "./test.mp4"
     output_dir = "./clips"
-    timestamps = detectKills(video_path)
-    clip_paths = extractClips(video_path, timestamps, output_dir)
+    clip_paths = extractClips(video_path, output_dir)
     print("Extracted clips:", clip_paths)
     
 
