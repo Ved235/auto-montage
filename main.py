@@ -7,6 +7,7 @@ from src.clipsExtraction import extractClips
 import shutil
 import os
 import psutil
+import DearPyGui_DragAndDrop as dpg_dnd
 
 def montage_task(input_path, audio_path, output_path):
     temp_dir = "./temp_clips"
@@ -29,8 +30,9 @@ class AutoMontageGUI:
         self.cancel_requested = False
 
         dpg.create_context()
-
+        dpg_dnd.initialize()
         self.setup_gui()
+        dpg_dnd.set_drop(self.drop_handler)
     
     def setup_gui(self):
         with dpg.window(width=800, height=400, tag="main_window"):
@@ -91,7 +93,26 @@ class AutoMontageGUI:
             dpg.add_separator()
             dpg.add_input_text(tag="error_message", multiline=True, readonly=True, width=450, height=150)
             dpg.add_button(label="OK", width=100, callback=lambda: dpg.hide_item("error_modal"))
+    
+    def drop_handler(self, data, keys):
+        if data and len(data) > 0:
+            file_path = data[0]
+            file_ext = os.path.splitext(file_path)[1].lower()
+        
+            video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm', '.m4v']
+            audio_extensions = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.m4a']
             
+            if file_ext in video_extensions:
+                self.inputPath = file_path
+                dpg.set_value("input_path", self.inputPath)
+                self.log_message(f"Video file dropped: {file_path}")
+            elif file_ext in audio_extensions:
+                self.audioPath = file_path
+                dpg.set_value("audio_path", self.audioPath)
+                self.log_message(f"Audio file dropped: {file_path}")
+            else:
+                self.log_message(f"Unsupported file type: {file_ext}")
+
     def update_input_path(self, sender, app_data):
         directory = app_data["file_path_name"]
         self.inputPath = directory
