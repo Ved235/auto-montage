@@ -1,11 +1,20 @@
 import dearpygui.dearpygui as dpg
 import threading
+import multiprocessing
 import time
-from pathlib import Path
 from src.videoGeneration import generateMontage
 from src.clipsExtraction import extractClips
 import shutil
 import os
+import psutil
+
+def montage_task(input_path, audio_path, output_path, temp_dir="./temp_clips"):
+    try:
+        extractClips(input_path, output_dir=temp_dir)
+        generateMontage(temp_dir, audio_path, output_path)
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
 
 class AutoMontageGUI:
     def __init__(self):
@@ -16,6 +25,7 @@ class AutoMontageGUI:
         self.timeElapsed = 0
         self.timerActive = False
         self.current_process = None
+        self.cancel_requested = False
 
         dpg.create_context()
 
@@ -45,8 +55,11 @@ class AutoMontageGUI:
                     dpg.add_button(label="Browse", tag="browse_output_btn", callback=self.browse_output)
 
             dpg.add_separator()
+            
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="Generate Montage", tag="generate_btn", callback=self.start_processing, width=200, height=40)
+                dpg.add_button(label="Cancel", tag="cancel_btn", callback=self.cancel_processing, width=200, height=40)
 
-            dpg.add_button(label="Generate Montage", tag="generate_btn", callback=self.start_processing, width=200, height=40)
             dpg.add_text(tag="time_elapsed", default_value="Time Elapsed: 0s")
 
             with dpg.group():
@@ -167,6 +180,35 @@ class AutoMontageGUI:
                 dpg.set_value("time_elapsed", f"Time Elapsed: {int(elapsed)}s")
             time.sleep(1)
 
+    def cancel_processing(self):
+        if not self.processing:
+            print("No processing in progress to cancel.")
+            return
+        
+        self.cancel_requested = True
+        dpg.configure_item("generate_btn", enabled=False, label="Cancelling...")
+        dpg.configure_item("cancel_btn", enabled=False)
+        self.log_message("Cancelling montage generation...")
+
+        if self.current_process and self.current_process.is_alive():
+            try:
+                parent = psutil.Process(self.current_process.pid)
+                for child in parent.children(recursive=True):
+                    self.log_message(f"Terminating child process: {child.pid}")
+                    child.terminate()
+                self.log_message("Subproces terminated.")
+
+                psutil.wait_procs(parent.children(recursive=True), timeout=3)
+                parent.terminate()
+            except Exception as e:
+                self.log_message(f"Error while terminating process: {str(e)}")
+
+            if os.path.exists("./temp_clips"):
+                shutil.rmtree("./temp_clips")
+                self.log_message("Temporary clips directory removed.")
+
+        self.reset()
+
     def start_processing(self, sender , app_data):
         if self.processing:
             print("Processing already in progress.")
@@ -181,21 +223,26 @@ class AutoMontageGUI:
             return
         
         self.processing = True
+        self.cancel_requested = False
+        
+        self.clear_log()
+        if os.path.exists("./temp_clips"):
+            shutil.rmtree("./temp_clips")
 
         self.timer_callback()  
-        
-        dpg.configure_item("generate_btn", enabled=False, label="Generating...")
 
-        self.clear_log()
+        dpg.configure_item("generate_btn", enabled=False, label="Generating...")
+        dpg.configure_item("cancel_btn", enabled = True)
+
         self.log_message("Starting montage generation...")
         self.log_message(f"Input Path: {self.inputPath}")
         self.log_message(f"Audio Path: {self.audioPath}")
         self.log_message(f"Output Path: {self.outputPath}")
         self.log_message("-" * 50)
 
-        thread = threading.Thread(target=self.generate_montage)
-        thread.daemon = True
-        thread.start()
+        self.current_process = multiprocessing.Process(target=montage_task, args=(self.inputPath, self.audioPath, self.outputPath))
+        self.current_process.start()
+        threading.Thread(target=self.watch_process, daemon=True).start()
     
     def generate_montage(self):
         try:
@@ -229,12 +276,24 @@ class AutoMontageGUI:
             self.show_error_modal(error_message)
             self.reset()
 
+    def watch_process(self):
+        self.current_process.join()  
+
+        if self.cancel_requested:
+            self.log_message("Process was cancelled.")
+        else:
+            self.log_message("Process completed successfully.")
+            self.show_success_modal(f"Montage generated at: {self.outputPath}")
+
+        self.reset()
+
     def reset(self):
         self.processing = False
         self.timerActive = False
         self.current_process = None
 
         dpg.configure_item("generate_btn", enabled=True, label="Generate Montage")
+        dpg.configure_item("cancel_btn", enabled=True, label="Cancel")
 
     def run(self):
 
