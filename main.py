@@ -8,7 +8,8 @@ import shutil
 import os
 import psutil
 
-def montage_task(input_path, audio_path, output_path, temp_dir="./temp_clips"):
+def montage_task(input_path, audio_path, output_path):
+    temp_dir = "./temp_clips"
     try:
         extractClips(input_path, output_dir=temp_dir)
         generateMontage(temp_dir, audio_path, output_path)
@@ -64,7 +65,7 @@ class AutoMontageGUI:
 
             with dpg.group():
                 dpg.add_text("Log Output:")
-                dpg.add_input_text(tag="log_output", multiline=True, width=600, height=200, readonly=True, default_value="")
+                dpg.add_input_text(tag="log_output", multiline=True, width=600, height=300, readonly=True, default_value="")
                 dpg.add_button(label="Clear Log", tag="clear_log_btn", callback=self.clear_log)
 
         with dpg.file_dialog(directory_selector=False, show=False, tag="input_file_dialog", callback=self.update_input_path, width=400, height=400):
@@ -82,8 +83,6 @@ class AutoMontageGUI:
             dpg.add_file_extension(".mov")
 
         with dpg.window(label="Success", modal=True, show=False, tag="success_modal", width=400, height=150, pos=[200, 200]):
-            dpg.add_text("Montage generation completed successfully!", tag="success_message")
-            dpg.add_separator()
             dpg.add_text("", tag="success_details")
             dpg.add_button(label="OK", width=100, callback=lambda: dpg.hide_item("success_modal"))
 
@@ -206,8 +205,8 @@ class AutoMontageGUI:
             if os.path.exists("./temp_clips"):
                 shutil.rmtree("./temp_clips")
                 self.log_message("Temporary clips directory removed.")
-
         self.reset()
+        self.show_success_modal("Montage generation succcessfully cancelled.")
 
     def start_processing(self, sender , app_data):
         if self.processing:
@@ -226,8 +225,6 @@ class AutoMontageGUI:
         self.cancel_requested = False
         
         self.clear_log()
-        if os.path.exists("./temp_clips"):
-            shutil.rmtree("./temp_clips")
 
         self.timer_callback()  
 
@@ -243,38 +240,6 @@ class AutoMontageGUI:
         self.current_process = multiprocessing.Process(target=montage_task, args=(self.inputPath, self.audioPath, self.outputPath))
         self.current_process.start()
         threading.Thread(target=self.watch_process, daemon=True).start()
-    
-    def generate_montage(self):
-        try:
-            original_print = print
-            def gui_print(*args, **kwargs):
-                message = " ".join(map(str, args))
-                self.log_message(message)
-                original_print(*args, **kwargs)
-            
-            import builtins
-            builtins.print = gui_print
-
-            try:
-                self.log_message("Extracting clips from input file.")
-                extractClips(self.inputPath, output_dir="./temp_clips")
-                self.log_message("Clips extracted successfully.")
-                generateMontage("./temp_clips", self.audioPath, self.outputPath)
-
-                success_details = f"Montage generated at: {self.outputPath}"
-                self.show_success_modal(success_details)
-                self.log_message("Montage generation completed successfully.")
-
-            finally:
-                shutil.rmtree("./temp_clips")
-                builtins.print = original_print
-                self.reset()
-
-        except Exception as e:
-            error_message = f"Error during montage generation: {str(e)}"
-            self.log_message(error_message)
-            self.show_error_modal(error_message)
-            self.reset()
 
     def watch_process(self):
         self.current_process.join()  
