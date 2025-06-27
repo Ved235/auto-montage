@@ -80,7 +80,7 @@ def generateMontage(clip_paths, audio_path, output_path, preset="fast"):
         print(f"Clip {i}: {clip.duration} seconds")
     video = mpy.concatenate_videoclips(processed_clips, method="compose")
 
-    video.write_videofile(output_path, codec="libx264", audio_codec="aac", preset="fast")
+    video.write_videofile(output_path, codec="libx264", audio_codec="aac", preset=preset)
 
     for clip in processed_clips:    
         clip.close()

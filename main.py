@@ -45,17 +45,17 @@ class AutoMontageGUI:
 
                 with dpg.group(horizontal=True):
                     dpg.add_text("Raw Input Path:")
-                    dpg.add_input_text(tag="input_path", width=400, default_value="", callback=self.update_input_path)
+                    dpg.add_input_text(tag="input_path", width=550, default_value="", callback=self.update_input_path)
                     dpg.add_button(label="Browse", tag="browse_input_btn", callback=self.browse_input)
                
                 with dpg.group(horizontal=True):
                     dpg.add_text("Audio Path:")
-                    dpg.add_input_text(tag="audio_path", width=400, default_value="", callback=self.update_audio_path)
+                    dpg.add_input_text(tag="audio_path", width=550, default_value="", callback=self.update_audio_path)
                     dpg.add_button(label="Browse", tag="browse_audio_btn", callback=self.browse_audio)
 
                 with dpg.group(horizontal=True):
                     dpg.add_text("Output Path:")
-                    dpg.add_input_text(tag="output_path", width=400, default_value="", callback=self.update_output_path)
+                    dpg.add_input_text(tag="output_path", width=550, default_value="", callback=self.update_output_path)
                     dpg.add_button(label="Browse", tag="browse_output_btn", callback=self.browse_output)
 
             dpg.add_separator()
@@ -63,7 +63,7 @@ class AutoMontageGUI:
             with dpg.collapsing_header(label="Advanced Settings", default_open=False):
                 with dpg.group(horizontal=True):
                     dpg.add_text("Preset:")
-                    dpg.add_combo(["ultrafast","fast", "medium", "slow"], default_value="fast", tag="preset_combo", callback=lambda s, a: setattr(self, 'preset', a))
+                    dpg.add_combo(["ultrafast","fast", "medium", "slow" , "veryslow"], default_value="fast", tag="preset_combo", callback=lambda s, a: setattr(self, 'preset', a))
             
             dpg.add_separator()
 
