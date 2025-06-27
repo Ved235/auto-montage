@@ -9,11 +9,11 @@ import os
 import psutil
 import DearPyGui_DragAndDrop as dpg_dnd
 
-def montage_task(input_path, audio_path, output_path):
+def montage_task(input_path, audio_path, output_path, preset="fast"):
     temp_dir = "./temp_clips"
     try:
         extractClips(input_path, output_dir=temp_dir)
-        generateMontage(temp_dir, audio_path, output_path)
+        generateMontage(temp_dir, audio_path, output_path,preset)
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
@@ -28,6 +28,7 @@ class AutoMontageGUI:
         self.timerActive = False
         self.current_process = None
         self.cancel_requested = False
+        self.preset = "fast"
 
         dpg.create_context()
         dpg_dnd.initialize()
@@ -35,7 +36,7 @@ class AutoMontageGUI:
         dpg_dnd.set_drop(self.drop_handler)
     
     def setup_gui(self):
-        with dpg.window(width=800, height=400, tag="main_window"):
+        with dpg.window(width=800, height=550, tag="main_window"):
             dpg.add_text("Auto Montage Generator")
             dpg.add_separator()
 
@@ -58,7 +59,14 @@ class AutoMontageGUI:
                     dpg.add_button(label="Browse", tag="browse_output_btn", callback=self.browse_output)
 
             dpg.add_separator()
+
+            with dpg.collapsing_header(label="Advanced Settings", default_open=False):
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Preset:")
+                    dpg.add_combo(["ultrafast","fast", "medium", "slow"], default_value="fast", tag="preset_combo", callback=lambda s, a: setattr(self, 'preset', a))
             
+            dpg.add_separator()
+
             with dpg.group(horizontal=True):
                 dpg.add_button(label="Generate Montage", tag="generate_btn", callback=self.start_processing, width=200, height=40)
                 dpg.add_button(label="Cancel", tag="cancel_btn", callback=self.cancel_processing, width=200, height=40)
@@ -258,7 +266,7 @@ class AutoMontageGUI:
         self.log_message(f"Output Path: {self.outputPath}")
         self.log_message("-" * 50)
 
-        self.current_process = multiprocessing.Process(target=montage_task, args=(self.inputPath, self.audioPath, self.outputPath))
+        self.current_process = multiprocessing.Process(target=montage_task, args=(self.inputPath, self.audioPath, self.outputPath,self.preset))
         self.current_process.start()
         threading.Thread(target=self.watch_process, daemon=True).start()
 
@@ -285,7 +293,7 @@ class AutoMontageGUI:
 
     def run(self):
 
-        dpg.create_viewport(title='Auto Montage Generator', width=800, height=600)
+        dpg.create_viewport(title='Auto Montage Generator', width=800, height=650)
         dpg.setup_dearpygui()
 
         dpg.set_primary_window("main_window", True)

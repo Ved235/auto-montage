@@ -5,7 +5,7 @@ import subprocess
 import random
 import shutil
 
-def generateMontage(clip_paths, audio_path, output_path):
+def generateMontage(clip_paths, audio_path, output_path, preset="fast"):
     clips = sorted([os.path.join(clip_paths,f) for f in os.listdir(clip_paths)])
 
     if not clips:
@@ -80,7 +80,7 @@ def generateMontage(clip_paths, audio_path, output_path):
         print(f"Clip {i}: {clip.duration} seconds")
     video = mpy.concatenate_videoclips(processed_clips, method="compose")
 
-    video.write_videofile(output_path, codec="libx264", audio_codec="aac", threads=6)
+    video.write_videofile(output_path, codec="libx264", audio_codec="aac", preset="fast")
 
     for clip in processed_clips:    
         clip.close()
