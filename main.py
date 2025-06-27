@@ -13,6 +13,8 @@ class AutoMontageGUI:
         self.audioPath = ""
         self.outputPath = ""
         self.processing = False
+        self.timeElapsed = 0
+        self.timerActive = False
 
         dpg.create_context()
 
@@ -44,6 +46,7 @@ class AutoMontageGUI:
             dpg.add_separator()
 
             dpg.add_button(label="Generate Montage", tag="generate_btn", callback=self.start_processing, width=200, height=40)
+            dpg.add_text(tag="time_elapsed", default_value="Time Elapsed: 0s")
 
             with dpg.group():
                 dpg.add_text("Log Output:")
@@ -64,6 +67,18 @@ class AutoMontageGUI:
             dpg.add_file_extension(".avi")
             dpg.add_file_extension(".mov")
 
+        with dpg.window(label="Success", modal=True, show=False, tag="success_modal", width=400, height=150, pos=[200, 200]):
+            dpg.add_text("Montage generation completed successfully!", tag="success_message")
+            dpg.add_separator()
+            dpg.add_text("", tag="success_details")
+            dpg.add_button(label="OK", width=100, callback=lambda: dpg.hide_item("success_modal"))
+
+        with dpg.window(label="Error", modal=True, show=False, tag="error_modal", width=400, height=100, pos=[200, 200]):
+            dpg.add_text("An error occurred during montage generation:", color=[255, 100, 100])
+            dpg.add_separator()
+            dpg.add_input_text(tag="error_message", multiline=True, readonly=True, width=450, height=150)
+            dpg.add_button(label="OK", width=100, callback=lambda: dpg.hide_item("error_modal"))
+            
     def update_input_path(self, sender, app_data):
         directory = app_data["file_path_name"]
         self.inputPath = directory
@@ -91,6 +106,14 @@ class AutoMontageGUI:
     def browse_output(self, sender, app_data):
         dpg.show_item("output_file_dialog")
     
+    def show_success_modal(self, details=""):
+        dpg.set_value("success_details", details)
+        dpg.show_item("success_modal")
+    
+    def show_error_modal(self, error_message):
+        dpg.set_value("error_message", error_message)
+        dpg.show_item("error_modal")
+
     def validate_paths(self):
         errors = []
         
@@ -126,6 +149,23 @@ class AutoMontageGUI:
         new_log = f"[{timestamp}] {message}\n"
         dpg.set_value("log_output", current_log + new_log)
 
+    def timer_callback(self):  
+        if not self.timerActive:
+            self.timerActive = True
+            self.timeElapsed = time.time()
+            timer_thread = threading.Thread(target=self.update_timer)
+            timer_thread.daemon = True
+            timer_thread.start()
+        else:
+            self.timerActive = False
+
+    def update_timer(self):
+        while self.timerActive:
+            if self.processing:
+                elapsed = time.time() - self.timeElapsed
+                dpg.set_value("time_elapsed", f"Time Elapsed: {int(elapsed)}s")
+            time.sleep(1)
+
     def start_processing(self, sender , app_data):
         if self.processing:
             print("Processing already in progress.")
@@ -140,6 +180,9 @@ class AutoMontageGUI:
             return
         
         self.processing = True
+
+        self.timer_callback()  
+        
         dpg.configure_item("generate_btn", enabled=False, label="Generating...")
 
         self.clear_log()
@@ -169,17 +212,24 @@ class AutoMontageGUI:
                 extractClips(self.inputPath, output_dir="./temp_clips")
                 self.log_message("Clips extracted successfully.")
                 generateMontage("./temp_clips", self.audioPath, self.outputPath)
-                dpg.configure_item("generate_btn", enabled=True, label="Generate Montage")
+                
+                success_details = f"Montage generated at: {self.outputPath}"
+                self.show_success_modal(success_details)
                 self.log_message("Montage generation completed successfully.")
 
             finally:
                 shutil.rmtree("./temp_clips")
                 builtins.print = original_print
                 self.processing = False
+                dpg.configure_item("generate_btn", enabled=True, label="Generate Montage")
 
         except Exception as e:
             error_message = f"Error during montage generation: {str(e)}"
             self.log_message(error_message)
+            self.show_error_modal(error_message)
+
+            self.processing = False
+            dpg.configure_item("generate_btn", enabled=True, label="Generate Montage")
 
     def run(self):
 
