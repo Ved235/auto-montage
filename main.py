@@ -271,6 +271,8 @@ class AutoMontageGUI:
             self.log_message("Process completed successfully.")
             self.show_success_modal(f"Montage generated at: {self.outputPath}")
 
+            os.startfile(self.outputPath)
+
         self.reset()
 
     def reset(self):
