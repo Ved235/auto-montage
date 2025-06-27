@@ -36,7 +36,7 @@ class AutoMontageGUI:
         dpg_dnd.set_drop(self.drop_handler)
     
     def setup_gui(self):
-        with dpg.window(width=800, height=550, tag="main_window"):
+        with dpg.window(width=800, height=400, tag="main_window"):
             dpg.add_text("Auto Montage Generator")
             dpg.add_separator()
 
