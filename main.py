@@ -15,6 +15,7 @@ class AutoMontageGUI:
         self.processing = False
         self.timeElapsed = 0
         self.timerActive = False
+        self.current_process = None
 
         dpg.create_context()
 
@@ -212,7 +213,7 @@ class AutoMontageGUI:
                 extractClips(self.inputPath, output_dir="./temp_clips")
                 self.log_message("Clips extracted successfully.")
                 generateMontage("./temp_clips", self.audioPath, self.outputPath)
-                
+
                 success_details = f"Montage generated at: {self.outputPath}"
                 self.show_success_modal(success_details)
                 self.log_message("Montage generation completed successfully.")
@@ -220,16 +221,20 @@ class AutoMontageGUI:
             finally:
                 shutil.rmtree("./temp_clips")
                 builtins.print = original_print
-                self.processing = False
-                dpg.configure_item("generate_btn", enabled=True, label="Generate Montage")
+                self.reset()
 
         except Exception as e:
             error_message = f"Error during montage generation: {str(e)}"
             self.log_message(error_message)
             self.show_error_modal(error_message)
+            self.reset()
 
-            self.processing = False
-            dpg.configure_item("generate_btn", enabled=True, label="Generate Montage")
+    def reset(self):
+        self.processing = False
+        self.timerActive = False
+        self.current_process = None
+
+        dpg.configure_item("generate_btn", enabled=True, label="Generate Montage")
 
     def run(self):
 
@@ -246,4 +251,3 @@ class AutoMontageGUI:
 if __name__ == "__main__":
     gui = AutoMontageGUI()
     gui.run()
-    
