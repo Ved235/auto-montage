@@ -9,11 +9,11 @@ import os
 import psutil
 import DearPyGui_DragAndDrop as dpg_dnd
 
-def montage_task(input_path, audio_path, output_path, preset="fast"):
+def montage_task(input_path, audio_path, output_path, preset="fast", selected_transitions=None):
     temp_dir = "./temp_clips"
     try:
         extractClips(input_path, output_dir=temp_dir)
-        generateMontage(temp_dir, audio_path, output_path,preset)
+        generateMontage(temp_dir, audio_path, output_path, preset, selected_transitions)
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
@@ -64,6 +64,18 @@ class AutoMontageGUI:
                 with dpg.group(horizontal=True):
                     dpg.add_text("Preset:")
                     dpg.add_combo(["ultrafast","fast", "medium", "slow" , "veryslow"], default_value="fast", tag="preset_combo", callback=lambda s, a: setattr(self, 'preset', a))
+                
+                dpg.add_separator()
+
+                with dpg.group():
+                    dpg.add_text("Transition Effects:")
+                    with dpg.group(horizontal=True):
+                        dpg.add_checkbox(label="Translation", tag="translation_checkbox", default_value=True)
+                        dpg.add_checkbox(label="Rotation", tag="rotation_checkbox", default_value=True)
+                        dpg.add_checkbox(label="Zoom In", tag="zoom_in_checkbox", default_value=True)
+                        dpg.add_checkbox(label="Translation Inverse", tag="translation_inv_checkbox", default_value=True)
+                        dpg.add_checkbox(label="Zoom Out", tag="zoom_out_checkbox", default_value=True)
+                        dpg.add_checkbox(label="Rotation Inverse", tag="rotation_inv_checkbox", default_value=True)
             
             dpg.add_separator()
 
@@ -191,6 +203,25 @@ class AutoMontageGUI:
         new_log = f"[{timestamp}] {message}\n"
         dpg.set_value("log_output", current_log + new_log)
 
+    def get_transitions(self):
+        transitions = []
+        
+        if dpg.get_value("translation_checkbox"):
+            transitions.append("translation")
+        if dpg.get_value("rotation_checkbox"):
+            transitions.append("rotation") 
+        if dpg.get_value("zoom_in_checkbox"):
+            transitions.append("zoom_in")
+        if dpg.get_value("translation_inv_checkbox"):
+            transitions.append("translation_inv")
+        if dpg.get_value("zoom_out_checkbox"):
+            transitions.append("zoom_out")
+        if dpg.get_value("rotation_inv_checkbox"):
+            transitions.append("rotation_inv")
+        
+        # Return default transitions if none selected
+        return transitions if transitions else ["rotation", "zoom_in", "translation"]
+
     def timer_callback(self):  
         if not self.timerActive:
             self.timerActive = True
@@ -259,14 +290,18 @@ class AutoMontageGUI:
 
         dpg.configure_item("generate_btn", enabled=False, label="Generating...")
         dpg.configure_item("cancel_btn", enabled = True)
+        selected_transitions = self.get_transitions()
 
         self.log_message("Starting montage generation...")
         self.log_message(f"Input Path: {self.inputPath}")
         self.log_message(f"Audio Path: {self.audioPath}")
         self.log_message(f"Output Path: {self.outputPath}")
+        self.log_message(f"Preset: {self.preset}")
+        self.log_message(f"Selected Transitions: {selected_transitions}")
         self.log_message("-" * 50)
 
-        self.current_process = multiprocessing.Process(target=montage_task, args=(self.inputPath, self.audioPath, self.outputPath,self.preset))
+      
+        self.current_process = multiprocessing.Process(target=montage_task, args=(self.inputPath, self.audioPath, self.outputPath, self.preset, selected_transitions))
         self.current_process.start()
         threading.Thread(target=self.watch_process, daemon=True).start()
 

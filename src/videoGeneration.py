@@ -5,7 +5,7 @@ import subprocess
 import random
 import shutil
 
-def generateMontage(clip_paths, audio_path, output_path, preset="fast"):
+def generateMontage(clip_paths, audio_path, output_path, preset="fast" ,selected_transitions=None):
     clips = sorted([os.path.join(clip_paths,f) for f in os.listdir(clip_paths)])
 
     if not clips:
@@ -26,7 +26,14 @@ def generateMontage(clip_paths, audio_path, output_path, preset="fast"):
     dropTime = 8 / fps
     musicTime = 0.0
     
-    transitionTypes = ['translation','rotation','zoom_in','translation_inv','zoom_out','rotation_inv']
+    if selected_transitions and len(selected_transitions) > 0:
+        transitionTypes = selected_transitions
+        print(f"Using selected transitions: {transitionTypes}")
+    else:
+        transitionTypes = ['translation','rotation','zoom_in','translation_inv','zoom_out','rotation_inv']
+        print("No transitions selected, using default transitions.")
+
+   
     
     firstClip = firstClip.subclipped(0, firstClip.duration - dropTime)
     processed_clips.append(addAudio(firstClip, audio, musicTime))
