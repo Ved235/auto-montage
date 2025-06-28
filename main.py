@@ -9,11 +9,11 @@ import os
 import psutil
 import DearPyGui_DragAndDrop as dpg_dnd
 
-def montage_task(input_path, audio_path, output_path, preset="fast", selected_transitions=None):
+def montage_task(input_path, audio_path, output_path, preset="fast", selected_transitions=None, introDuration=0.5):
     temp_dir = "./temp_clips"
     try:
         extractClips(input_path, output_dir=temp_dir)
-        generateMontage(temp_dir, audio_path, output_path, preset, selected_transitions)
+        generateMontage(temp_dir, audio_path, output_path, preset, selected_transitions, introDuration)
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
@@ -29,6 +29,7 @@ class AutoMontageGUI:
         self.current_process = None
         self.cancel_requested = False
         self.preset = "fast"
+        self.introDuration = 0.5
 
         dpg.create_context()
         dpg_dnd.initialize()
@@ -76,7 +77,8 @@ class AutoMontageGUI:
                         dpg.add_checkbox(label="Translation Inverse", tag="translation_inv_checkbox", default_value=True)
                         dpg.add_checkbox(label="Zoom Out", tag="zoom_out_checkbox", default_value=True)
                         dpg.add_checkbox(label="Rotation Inverse", tag="rotation_inv_checkbox", default_value=True)
-            
+
+                dpg.add_input_float(label="Intro duration (seconds)", tag="intro_duration", default_value=0.5, min_value=0.2, max_value=1)
             dpg.add_separator()
 
             with dpg.group(horizontal=True):
@@ -218,8 +220,7 @@ class AutoMontageGUI:
             transitions.append("zoom_out")
         if dpg.get_value("rotation_inv_checkbox"):
             transitions.append("rotation_inv")
-        
-        # Return default transitions if none selected
+            
         return transitions if transitions else ["rotation", "zoom_in", "translation"]
 
     def timer_callback(self):  
@@ -291,17 +292,17 @@ class AutoMontageGUI:
         dpg.configure_item("generate_btn", enabled=False, label="Generating...")
         dpg.configure_item("cancel_btn", enabled = True)
         selected_transitions = self.get_transitions()
-
+        self.introDuration = dpg.get_value("intro_duration")
         self.log_message("Starting montage generation...")
         self.log_message(f"Input Path: {self.inputPath}")
         self.log_message(f"Audio Path: {self.audioPath}")
         self.log_message(f"Output Path: {self.outputPath}")
         self.log_message(f"Preset: {self.preset}")
         self.log_message(f"Selected Transitions: {selected_transitions}")
+        self.log_message(f"Intro Duration: {self.introDuration} seconds")
         self.log_message("-" * 50)
-
       
-        self.current_process = multiprocessing.Process(target=montage_task, args=(self.inputPath, self.audioPath, self.outputPath, self.preset, selected_transitions))
+        self.current_process = multiprocessing.Process(target=montage_task, args=(self.inputPath, self.audioPath, self.outputPath, self.preset, selected_transitions,self.introDuration))
         self.current_process.start()
         threading.Thread(target=self.watch_process, daemon=True).start()
 

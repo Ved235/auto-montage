@@ -5,7 +5,7 @@ import subprocess
 import random
 import shutil
 
-def generateMontage(clip_paths, audio_path, output_path, preset="fast" ,selected_transitions=None):
+def generateMontage(clip_paths, audio_path, output_path, preset="fast" ,selected_transitions=None, introDuration=0.5):
     clips = sorted([os.path.join(clip_paths,f) for f in os.listdir(clip_paths)])
 
     if not clips:
@@ -36,7 +36,7 @@ def generateMontage(clip_paths, audio_path, output_path, preset="fast" ,selected
    
     
     firstClip = firstClip.subclipped(0, firstClip.duration - dropTime)
-    processed_clips.append(addAudio(firstClip, audio, musicTime))
+    processed_clips.append(addAudio(firstClip, audio, musicTime,introDuration))
     musicTime += firstClip.duration
 
     for i in range(len(clips)-1):
@@ -71,10 +71,10 @@ def generateMontage(clip_paths, audio_path, output_path, preset="fast" ,selected
                     nextClip = nextClip.subclipped(dropTime, nextClip.duration)
 
                 temp_transition = mpy.VideoFileClip(str(temp_transition))
-                processed_clips.append(addAudio(temp_transition, audio, musicTime))
+                processed_clips.append(addAudio(temp_transition, audio, musicTime, introDuration))
                 musicTime += temp_transition.duration
 
-                nextClip = addAudio(nextClip, audio, musicTime)
+                nextClip = addAudio(nextClip, audio, musicTime, introDuration)
                 processed_clips.append(nextClip)
                 musicTime += nextClip.duration
 
@@ -96,11 +96,10 @@ def generateMontage(clip_paths, audio_path, output_path, preset="fast" ,selected
     # Clean up temporary files
     shutil.rmtree(temp_dir)
 
-def addAudio(clip, audio, timing):
+def addAudio(clip, audio, timing, introDuration=0.5):
 
     clipDuration = clip.duration
     musicDuration = audio.duration
-    introDuration = 0.5
     
     if timing > musicDuration:
         loopTiming = timing % musicDuration
