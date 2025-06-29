@@ -29,7 +29,7 @@ _Currently only supports valorant._
 
 ## Installation
 ### Setup
-
+You can either clone the entire repository or download the essential files straight from the release section.
 ```bash
 git clone https://github.com/Ved235/auto-montage.git
 cd auto-montage
