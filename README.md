@@ -1,7 +1,7 @@
 # Auto Montage Generator 
 
 An automated video montage creation tool that uses a pretrained model from [roboflow](https://roboflow.com/) to detect highlights (kills), extract clips and then merge them into a video montage with audio and transitions.
-_Currently only supports valoran.t_
+_Currently only supports valorant._
 ## Features
 - **AI Kill Detection**: Uses YOLO machine learning model to automatically detect kills/highlights in gaming videos
 - **Dynamic Transitions**: Multiple transition effects including rotation, zoom, translation and distortion
@@ -25,6 +25,7 @@ _Currently only supports valoran.t_
 │                 │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
+![image](https://github.com/user-attachments/assets/46e116c6-b985-46c2-8040-055c98cb1395)
 
 ## Installation
 ### Setup
