@@ -35,6 +35,7 @@ class AutoMontageGUI:
         dpg_dnd.initialize()
         self.setup_gui()
         dpg_dnd.set_drop(self.drop_handler)
+        dpg_dnd.set_drag_enter(self.drop_hover)
     
     def setup_gui(self):
         with dpg.window(width=800, height=400, tag="main_window"):
@@ -121,8 +122,8 @@ class AutoMontageGUI:
             file_path = data[0]
             file_ext = os.path.splitext(file_path)[1].lower()
         
-            video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm', '.m4v']
-            audio_extensions = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.m4a']
+            video_extensions = ['.mp4', '.mov', '.mkv', '.m4v']
+            audio_extensions = ['.mp3', '.wav', '.m4a']
             
             if file_ext in video_extensions:
                 self.inputPath = file_path
@@ -133,6 +134,17 @@ class AutoMontageGUI:
                 dpg.set_value("audio_path", self.audioPath)
                 self.log_message(f"Audio file dropped: {file_path}")
             else:
+                self.log_message(f"Unsupported file type: {file_ext}")
+
+    def drop_hover(self, data, keys):
+        if data and len(data) > 0:
+            file_path = data[0]
+            file_ext = os.path.splitext(file_path)[1].lower()
+        
+            video_extensions = ['.mp4', '.mov', '.mkv', '.m4v']
+            audio_extensions = ['.mp3', '.wav', '.m4a']
+            
+            if file_ext not in video_extensions and file_ext not in audio_extensions:
                 self.log_message(f"Unsupported file type: {file_ext}")
 
     def update_input_path(self, sender, app_data):
