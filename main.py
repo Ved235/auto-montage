@@ -95,7 +95,7 @@ class AutoMontageGUI:
 
         with dpg.file_dialog(directory_selector=False, show=False, tag="input_file_dialog", callback=self.update_input_path, width=400, height=400):
             dpg.add_file_extension(".mp4")
-            dpg.add_file_extension(".avi")
+            dpg.add_file_extension(".mkv")
             dpg.add_file_extension(".mov")
         
         with dpg.file_dialog(directory_selector=False, show=False, tag="audio_file_dialog", callback=self.update_audio_path, width=400, height=400):
@@ -104,7 +104,7 @@ class AutoMontageGUI:
         
         with dpg.file_dialog(directory_selector=False, show=False, tag="output_file_dialog", callback=self.update_output_path, width=400, height=400):
             dpg.add_file_extension(".mp4")
-            dpg.add_file_extension(".avi")
+            dpg.add_file_extension(".mkv")
             dpg.add_file_extension(".mov")
 
         with dpg.window(label="Success", modal=True, show=False, tag="success_modal", width=400, height=150, pos=[200, 200]):
