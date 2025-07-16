@@ -31,7 +31,10 @@ _Currently only supports valorant._
 ### Setup
 You can either clone the entire repository or download the essential files straight from the release section. Now it also supports install from testpyPi.
 #### testpyPi
+It can be installed through the use of [uv](https://docs.astral.sh/uv/). Please ensure the virtual enviornment has python >=3.12
+
 ```bash
+uv venv
 uv pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pymontage
 auto-montage
 ```
