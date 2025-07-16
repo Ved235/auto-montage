@@ -29,17 +29,18 @@ _Currently only supports valorant._
 
 ## Installation
 ### Setup
-You can either clone the entire repository or download the essential files straight from the release section.
+You can either clone the entire repository or download the essential files straight from the release section. Now it also supports install from testpyPi.
+#### testpyPi
+```bash
+uv pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pymontage
+auto-montage
+```
+
+#### Source
 ```bash
 git clone https://github.com/Ved235/auto-montage.git
 cd auto-montage
 pip install -r requirements.txt
-```
-
-### Usage
-
-```bash 
-python main.py
 ```
 
 1. Select the input files (video and audio) and select the output path.
